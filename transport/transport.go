@@ -126,10 +126,12 @@ func (tr *transportRequest) extraHeaders() http.Header {
 }
 
 type RoundTripDetails struct {
-	Host    string
-	TCPAddr *net.TCPAddr
-	IsProxy bool
-	Error   error
+	Host       string
+	TCPAddr    *net.TCPAddr
+	IsProxy    bool
+	Error      error
+	LocalAddr  net.Addr
+	RemoteAddr net.Addr
 }
 
 func (t *Transport) DetailedRoundTrip(req *http.Request) (details *RoundTripDetails, resp *http.Response, err error) {
@@ -167,7 +169,14 @@ func (t *Transport) DetailedRoundTrip(req *http.Request) (details *RoundTripDeta
 	}
 
 	resp, err = pconn.roundTrip(treq)
-	return &RoundTripDetails{pconn.host, pconn.ip, pconn.isProxy, err}, resp, err
+	return &RoundTripDetails{
+		Host:       pconn.host,
+		TCPAddr:    pconn.ip,
+		IsProxy:    pconn.isProxy,
+		Error:      err,
+		LocalAddr:  pconn.conn.LocalAddr(),
+		RemoteAddr: pconn.conn.RemoteAddr(),
+	}, resp, err
 }
 
 // RoundTrip implements the RoundTripper interface.
